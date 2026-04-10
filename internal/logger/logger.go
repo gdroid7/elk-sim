@@ -29,6 +29,9 @@ type Logger struct {
 func New(cfg Config) *Logger {
 	if cfg.TZ == nil {
 		cfg.TZ, _ = time.LoadLocation("Asia/Kolkata")
+		if cfg.TZ == nil {
+			cfg.TZ = time.UTC
+		}
 	}
 	if cfg.TimeWindow == 0 {
 		cfg.TimeWindow = 30 * time.Minute

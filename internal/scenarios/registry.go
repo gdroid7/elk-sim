@@ -3,13 +3,14 @@ package scenarios
 import "sort"
 
 type Meta struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	DurationSec int    `json:"duration_sec"`
-	LogCount    int    `json:"log_count"`
-	Index       string `json:"index"`
-	BinPath     string `json:"bin_path"`
+	ID               string   `json:"id"`
+	Name             string   `json:"name"`
+	Description      string   `json:"description"`
+	DurationSec      int      `json:"duration_sec"`
+	LogCount         int      `json:"log_count"`
+	Index            string   `json:"index"`
+	BinPath          string   `json:"bin_path"`
+	DiscoverColumns  []string `json:"discover_columns"`
 }
 
 // registry is written only from init() functions (before ListenAndServe).

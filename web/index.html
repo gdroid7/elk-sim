@@ -61,6 +61,16 @@ main { padding: 24px; max-width: 1200px; margin: 0 auto; }
 <script>
 let activeES = null;
 
+function discoverUrl(s) {
+  const cols = (s.discover_columns && s.discover_columns.length)
+    ? s.discover_columns
+    : ['level', 'msg'];
+  const colsRison = '!(' + cols.join(',') + ')';
+  const a = encodeURIComponent(`(columns:${colsRison},index:'${s.index}*')`);
+  const g = encodeURIComponent('(refreshInterval:(pause:!t,value:0),time:(from:now-2h,to:now))');
+  return `http://localhost:5601/app/discover#/?_a=${a}&_g=${g}`;
+}
+
 async function loadScenarios() {
   const res = await fetch('/api/scenarios');
   const scenarios = await res.json();
@@ -87,7 +97,7 @@ async function loadScenarios() {
       </div>
       <div class="card-links">
         <a class="btn-sm" href="http://localhost:5601/app/dashboards#/view/sim-${s.id}-dashboard" target="_blank">Dashboard</a>
-        <a class="btn-sm" href="http://localhost:5601/app/discover#/?_a=(index:'sim-${s.id}*')" target="_blank">Discover</a>
+        <a class="btn-sm" href="${discoverUrl(s)}" target="_blank">Discover</a>
       </div>
     `;
     grid.appendChild(card);
