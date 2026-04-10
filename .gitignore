@@ -2,3 +2,6 @@
 bin/simulator
 bin/scenarios/
 logs/*.log
+.env
+logs/*
+bin/*

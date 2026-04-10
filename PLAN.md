@@ -377,15 +377,82 @@ Order: 01 → 02 → 03 → 04 → 05. One commit per scenario.
 
 ## Worktree Protocol
 
-Switch AI agents/models → new worktree:
-```bash
-git worktree add ../go-simulator-<agent> -b feat/<agent>
-# work → commit → push
-git checkout main && git merge feat/<agent>
-git worktree remove ../go-simulator-<agent>
+**Every AI agent/tool that touches this repo must work in its own worktree — never directly on `main`.**
+
+### Naming convention
+
 ```
-Branch naming: `feat/core-builder`, `feat/kibana-expert`, etc.
-Merge to `main` only after QA passes.
+.worktrees/<tool>-<role>[-NNN]
+```
+
+| Segment | Examples |
+|---------|---------|
+| `<tool>` | `claude`, `gemini`, `gpt`, `cursor`, `copilot`, `kiro`, `codex` |
+| `<role>` | `core-builder`, `scenario-02`, `kibana-expert`, `demo-expert`, `qa` |
+| `[-NNN]` | `-002`, `-003` — only when same tool+role runs more than once |
+
+**Examples:**
+```
+.worktrees/claude-scenario-02
+.worktrees/gemini-kibana-expert
+.worktrees/gpt-scenario-03-002   ← second attempt by same tool
+.worktrees/cursor-demo-expert
+```
+
+Branch name mirrors the worktree: `feat/<tool>-<role>[-NNN]`
+
+### Create worktree
+
+```bash
+# always branch off main
+git fetch origin main
+git worktree add .worktrees/<tool>-<role> -b feat/<tool>-<role> origin/main
+cd .worktrees/<tool>-<role>
+```
+
+### Find the latest code (for any agent picking up mid-project)
+
+```bash
+# list all active worktrees
+git worktree list
+
+# list all feature branches sorted by commit date (latest first)
+git branch -a --sort=-committerdate | grep feat/
+
+# see what each branch added
+git log --oneline main..feat/<tool>-<role>
+```
+
+### Finish & merge
+
+```bash
+# build must pass before merge
+go build ./cmd/server
+go build ./scenarios/<N>-<id>   # if applicable
+
+# commit inside worktree, push feature branch
+git add <files>
+git commit -m "feat(<role>): <description>"
+git push origin feat/<tool>-<role>
+
+# merge to main (from repo root, not worktree)
+cd /path/to/repo-root
+git checkout main
+git pull origin main
+git merge feat/<tool>-<role> --no-ff -m "feat(<role>): merge <description>"
+git push origin main
+
+# cleanup
+git worktree remove .worktrees/<tool>-<role>
+git branch -d feat/<tool>-<role>
+git push origin --delete feat/<tool>-<role>
+```
+
+Merge to `main` only after the phase's acceptance criteria pass.
+
+### .worktrees is gitignored
+
+`.worktrees/` is in `.gitignore` — worktree directories are never committed.
 
 ---
 

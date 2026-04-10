@@ -91,16 +91,49 @@ Log output is **JSON on stdout**, one object per line, always including `time`, 
 
 ## Worktree Protocol
 
-When switching agents or models, use git worktrees:
+**Every AI agent/tool works in its own worktree, never directly on `main`.**
 
-```bash
-git worktree add ../go-simulator-<agent> -b feat/<agent>
-# work → commit → push
-git checkout main && git merge feat/<agent>
-git worktree remove ../go-simulator-<agent>
+### Naming: `.worktrees/<tool>-<role>[-NNN]`
+
+```
+<tool>  = claude | gemini | gpt | cursor | copilot | kiro | codex | ...
+<role>  = core-builder | scenario-02 | scenario-03 | kibana-expert | demo-expert | qa
+[-NNN]  = -002, -003 ... only if same tool+role runs more than once
 ```
 
-Merge to `main` only after QA passes for that phase.
+Examples: `.worktrees/claude-scenario-02`, `.worktrees/gemini-kibana-expert`, `.worktrees/gpt-scenario-03-002`
+
+### Create
+
+```bash
+git fetch origin main
+git worktree add .worktrees/<tool>-<role> -b feat/<tool>-<role> origin/main
+```
+
+### Find latest code (picking up mid-project)
+
+```bash
+git worktree list                                       # active worktrees
+git branch -a --sort=-committerdate | grep feat/       # branches, newest first
+git log --oneline main..feat/<tool>-<role>             # what a branch added
+```
+
+### Merge & cleanup
+
+```bash
+# inside worktree: build passes → commit → push
+git push origin feat/<tool>-<role>
+
+# from repo root: merge → push main → cleanup
+git checkout main && git pull origin main
+git merge feat/<tool>-<role> --no-ff -m "feat(<role>): ..."
+git push origin main
+git worktree remove .worktrees/<tool>-<role>
+git branch -d feat/<tool>-<role>
+git push origin --delete feat/<tool>-<role>
+```
+
+`.worktrees/` is gitignored — never committed.
 
 ## ELK Services
 
