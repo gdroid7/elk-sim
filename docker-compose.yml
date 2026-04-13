@@ -48,15 +48,5 @@ services:
       - logstash
     command: filebeat -e -strict.perms=false
 
-  simulator:
-    build: .
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./logs:/app/logs
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
-
 volumes:
   esdata:

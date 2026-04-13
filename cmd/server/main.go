@@ -27,9 +27,6 @@ func main() {
 	if err := os.MkdirAll("logs", 0755); err != nil {
 		log.Fatalf("mkdir logs: %v", err)
 	}
-	if err := os.MkdirAll("bin/scenarios", 0755); err != nil {
-		log.Fatalf("mkdir bin/scenarios: %v", err)
-	}
 
 	mux := http.NewServeMux()
 
@@ -95,16 +92,16 @@ func runHandler(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	binPath := meta.BinPath
-	if !filepath.IsAbs(binPath) {
-		if exe, err := os.Executable(); err == nil {
-			absPath := filepath.Join(filepath.Dir(exe), binPath)
-			if _, err := os.Stat(absPath); err == nil {
-				binPath = absPath
-			}
-		}
-	}
 
-	cmd := exec.CommandContext(ctx, binPath, args...)
+	// If the path is a directory, run the scenario source via `go run`.
+	// Otherwise, execute the binary directly (fallback for pre-built binaries).
+	info, err := os.Stat(binPath)
+	var cmd *exec.Cmd
+	if err == nil && info.IsDir() {
+		cmd = exec.CommandContext(ctx, "go", append([]string{"run", binPath}, args...)...)
+	} else {
+		cmd = exec.CommandContext(ctx, binPath, args...)
+	}
 	pr, pw := io.Pipe()
 	defer pr.Close()
 	cmd.Stdout = pw

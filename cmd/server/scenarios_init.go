@@ -10,7 +10,7 @@ func init() {
 		DurationSec:     6,
 		LogCount:        6,
 		Index:           "sim-auth-brute-force",
-		BinPath:         "bin/scenarios/auth-brute-force",
+		BinPath:         "scenarios/01-auth-brute-force",
 		DiscoverColumns: []string{"level", "msg", "user_id", "ip_address", "attempt_count", "error_code"},
 	})
 	scenarios.Register(scenarios.Meta{
@@ -20,7 +20,7 @@ func init() {
 		DurationSec:     8,
 		LogCount:        9,
 		Index:           "sim-payment-decline",
-		BinPath:         "bin/scenarios/payment-decline",
+		BinPath:         "scenarios/02-payment-decline",
 		DiscoverColumns: []string{"level", "msg", "order_id", "amount", "error_code", "gateway"},
 	})
 	scenarios.Register(scenarios.Meta{
@@ -30,7 +30,7 @@ func init() {
 		DurationSec:     10,
 		LogCount:        10,
 		Index:           "sim-db-slow-query",
-		BinPath:         "bin/scenarios/db-slow-query",
+		BinPath:         "scenarios/03-db-slow-query",
 		DiscoverColumns: []string{"level", "msg", "query_type", "duration_ms", "table", "error_code"},
 	})
 	scenarios.Register(scenarios.Meta{
@@ -40,7 +40,7 @@ func init() {
 		DurationSec:     7,
 		LogCount:        12,
 		Index:           "sim-cache-stampede",
-		BinPath:         "bin/scenarios/cache-stampede",
+		BinPath:         "scenarios/04-cache-stampede",
 		DiscoverColumns: []string{"level", "msg", "cache_key", "hit", "db_calls", "latency_ms"},
 	})
 	scenarios.Register(scenarios.Meta{
@@ -50,7 +50,7 @@ func init() {
 		DurationSec:     10,
 		LogCount:        10,
 		Index:           "sim-api-degradation",
-		BinPath:         "bin/scenarios/api-degradation",
+		BinPath:         "scenarios/05-api-degradation",
 		DiscoverColumns: []string{"level", "msg", "endpoint", "status_code", "latency_ms", "error_code"},
 	})
 }
