@@ -34,7 +34,7 @@ func New(cfg Config) *Logger {
 		}
 	}
 	if cfg.TimeWindow == 0 {
-		cfg.TimeWindow = 30 * time.Minute
+		cfg.TimeWindow = 10 * time.Minute
 	}
 	if cfg.StartTime.IsZero() {
 		cfg.StartTime = time.Now().In(cfg.TZ)

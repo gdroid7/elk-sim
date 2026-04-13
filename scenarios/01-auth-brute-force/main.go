@@ -10,7 +10,7 @@ import (
 func main() {
 	tz := flag.String("tz", "Asia/Kolkata", "timezone")
 	compressTime := flag.Bool("compress-time", false, "compress timestamps")
-	timeWindow := flag.Duration("time-window", 30*time.Minute, "simulated window")
+	timeWindow := flag.Duration("time-window", 10*time.Minute, "simulated window")
 	logFile := flag.String("log-file", "", "log file path (optional)")
 	flag.Parse()
 
