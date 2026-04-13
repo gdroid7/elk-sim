@@ -97,7 +97,7 @@ async function loadScenarios() {
         <button class="btn btn-run" id="run-${s.id}" onclick="runScenario('${s.id}')">&#9654; Run</button>
       </div>
       <div class="card-links">
-        <a class="btn-sm" href="${s.dashboard_id ? 'http://localhost:5601/app/dashboards#/view/' + s.dashboard_id : '#'}" target="_blank" ${!s.dashboard_id ? 'style="opacity:0.4;pointer-events:none"' : ''}>Dashboard</a>
+        <a class="btn-sm" href="${s.dashboard_id ? 'http://localhost:5601/app/dashboards#/view/' + s.dashboard_id + '?_g=(filters:!(),refreshInterval:(pause:!t,value:60000),time:(from:now-15m,to:now))' : '#'}" target="_blank" ${!s.dashboard_id ? 'style="opacity:0.4;pointer-events:none"' : ''}>Dashboard</a>
         <a class="btn-sm" href="${discoverUrl(s)}" target="_blank">Discover</a>
       </div>
     `;
