@@ -1,34 +1,43 @@
 filebeat.inputs:
-- type: log
+- type: filestream
+  id: sim-auth-brute-force
   paths: [/var/log/app/sim-auth-brute-force.log]
   fields: { log_type: sim-auth-brute-force }
   fields_under_root: true
-  close_inactive: 5s
-  scan_frequency: 3s
-- type: log
+  close.inactive: 5s
+  prospector.scanner.check_interval: 3s
+- type: filestream
+  id: sim-payment-decline
   paths: [/var/log/app/sim-payment-decline.log]
   fields: { log_type: sim-payment-decline }
   fields_under_root: true
-  close_inactive: 5s
-  scan_frequency: 3s
-- type: log
+  close.inactive: 5s
+  prospector.scanner.check_interval: 3s
+- type: filestream
+  id: sim-db-slow-query
   paths: [/var/log/app/sim-db-slow-query.log]
   fields: { log_type: sim-db-slow-query }
   fields_under_root: true
-  close_inactive: 5s
-  scan_frequency: 3s
-- type: log
+  close.inactive: 5s
+  prospector.scanner.check_interval: 3s
+- type: filestream
+  id: sim-cache-stampede
   paths: [/var/log/app/sim-cache-stampede.log]
   fields: { log_type: sim-cache-stampede }
   fields_under_root: true
-  close_inactive: 5s
-  scan_frequency: 3s
-- type: log
+  close.inactive: 5s
+  prospector.scanner.check_interval: 3s
+- type: filestream
+  id: sim-api-degradation
   paths: [/var/log/app/sim-api-degradation.log]
   fields: { log_type: sim-api-degradation }
   fields_under_root: true
-  close_inactive: 5s
-  scan_frequency: 3s
+  close.inactive: 5s
+  prospector.scanner.check_interval: 3s
 
 output.logstash:
   hosts: ["logstash:5044"]
+
+# suppress setup warnings — ingest pipelines not used (output is Logstash, not ES)
+setup.ilm.enabled: false
+setup.template.enabled: false
