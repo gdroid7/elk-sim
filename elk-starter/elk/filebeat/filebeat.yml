@@ -1,0 +1,20 @@
+filebeat.inputs:
+  - type: log
+    enabled: true
+    paths:
+      - /var/log/app/app.log
+    fields:
+      app_name: "${APP_NAME:myapp}"
+    fields_under_root: true
+    # Required on macOS Docker Desktop — prevents logs from not shipping
+    close_inactive: 5m
+    scan_frequency: 5s
+    # Join lines starting with whitespace to previous line (stack traces: Java, Python, Go)
+    multiline.pattern: '^\s'
+    multiline.negate: false
+    multiline.match: after
+
+output.logstash:
+  hosts: ["logstash:5044"]
+
+logging.level: info
