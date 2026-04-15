@@ -1,0 +1,16 @@
+filebeat.inputs:
+  - type: filestream
+    id: app-logs
+    paths:
+      - {{LOG_PATH}}
+    fields:
+      app_name: {{APP_NAME}}
+      log_format: {{LOG_FORMAT}}
+    fields_under_root: true
+    close_inactive: 2m
+    scan_frequency: 5s
+
+output.logstash:
+  hosts: ["logstash:5044"]
+
+logging.level: info
