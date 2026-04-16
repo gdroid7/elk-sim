@@ -36,6 +36,7 @@ func init() {
 		Index:           "sim-db-slow-query",
 		BinPath:         "scenarios/03-db-slow-query",
 		DiscoverColumns: []string{"level", "msg", "query_type", "duration_ms", "table", "error_code"},
+		IndexPatternID:  "03-index-pattern",
 	})
 	scenarios.Register(scenarios.Meta{
 		ID:              "cache-stampede",
@@ -46,6 +47,7 @@ func init() {
 		Index:           "sim-cache-stampede",
 		BinPath:         "scenarios/04-cache-stampede",
 		DiscoverColumns: []string{"level", "msg", "cache_key", "hit", "db_calls", "latency_ms"},
+		IndexPatternID:  "04-index-pattern",
 	})
 	scenarios.Register(scenarios.Meta{
 		ID:              "api-degradation",
@@ -56,5 +58,6 @@ func init() {
 		Index:           "sim-api-degradation",
 		BinPath:         "scenarios/05-api-degradation",
 		DiscoverColumns: []string{"level", "msg", "endpoint", "status_code", "latency_ms", "error_code"},
+		IndexPatternID:  "05-index-pattern",
 	})
 }

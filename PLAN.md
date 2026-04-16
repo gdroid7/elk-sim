@@ -333,12 +333,55 @@ output {
 ## Phases
 
 ```
-Phase 1: core-builder          → server (exec model), logger (IST+compress), ELK, UI
-Phase 2: scenario-implementor  → 5 × main.go, commit+push after each
-Phase 3: kibana-expert         → 5 × (setup.sh + reset.sh + dashboard.ndjson + discover_url.md)
-Phase 4: demo-expert           → 5 × (README.md + verbal_script.md + notebooklm_prompt.md)
-Phase 5: qa-agent              → end-to-end validation
+Phase 1: core-builder          → server (exec model), logger (IST+compress), ELK, UI          ✅ DONE
+Phase 2: scenario-implementor  → 5 × main.go, commit+push after each                          ✅ DONE
+Phase 3: kibana-expert         → 5 × (setup.sh + reset.sh + dashboard.ndjson + discover_url.md)  🔄 PARTIAL (01 missing discover_url.md; 03-05 not started)
+Phase 3: demo-expert           → 5 × (README.md + verbal_script.md + notebooklm_prompt.md)    🔄 PARTIAL (01-02 done; 03-05 not started)
+Phase 4: qa-agent              → end-to-end validation                                         ⏳ NOT STARTED
 ```
+
+## Progress (as of 2026-04-15)
+
+### Phase 1 — core-builder ✅
+All files in `cmd/`, `internal/`, `web/`, `elk/`, `scripts/`, `docker-compose.yml`, `Dockerfile`, `Makefile`, `go.mod` complete.
+
+Notable fixes applied post-merge:
+- Filebeat switched to `filestream` input type; added `close_inactive` + `scan_frequency` for macOS Docker Desktop
+- Logstash strips Filebeat metadata fields from ES docs
+- `--compress-time` backdate fix: timestamps backdate from `startTime`, not `now`
+- `index.html` Discover URL format fixed: `dataViewId`, 15min window, 2s auto-refresh, no scenario filter query
+
+### Phase 2 — scenario-implementor ✅
+All 5 `scenarios/0N-name/main.go` committed. `cmd/server/scenarios_init.go` has 2 uncommitted changes (adding `IndexPatternID` for scenarios 03-05).
+
+> **Pending commit:** `scenarios_init.go` (IndexPatternID for 03/04/05) + `index.html` (Discover URL fix)
+
+### Phase 3 — kibana-expert 🔄
+
+| Scenario | setup.sh | reset.sh | dashboard.ndjson | discover_url.md |
+|----------|----------|----------|-----------------|-----------------|
+| 01 auth-brute-force | ✅ | ✅ | ✅ | ❌ missing |
+| 02 payment-decline | ✅ | ✅ | ✅ | ✅ |
+| 03 db-slow-query | ❌ | ❌ | ❌ | ❌ |
+| 04 cache-stampede | ❌ | ❌ | ❌ | ❌ |
+| 05 api-degradation | ❌ | ❌ | ❌ | ❌ |
+
+**Next:** kibana-expert agent must add `discover_url.md` for 01 and all 4 artifacts for 03/04/05.
+
+### Phase 3 — demo-expert 🔄
+
+| Scenario | README.md | verbal_script.md | notebooklm_prompt.md |
+|----------|-----------|-----------------|----------------------|
+| 01 auth-brute-force | ✅ | ✅ | ✅ |
+| 02 payment-decline | ✅ | ✅ | ✅ |
+| 03 db-slow-query | ❌ | ❌ | ❌ |
+| 04 cache-stampede | ❌ | ❌ | ❌ |
+| 05 api-degradation | ❌ | ❌ | ❌ |
+
+**Next:** demo-expert agent must add all 3 files for scenarios 03/04/05.
+
+### Phase 4 — qa-agent ⏳
+Not started. Run after Phase 3 is fully complete.
 
 ---
 
@@ -458,15 +501,15 @@ Merge to `main` only after the phase's acceptance criteria pass.
 
 ## Acceptance Criteria
 
-- [ ] `docker-compose up` starts full stack
-- [ ] `http://localhost:8080` shows UI
-- [ ] Each scenario runs, streams logs, writes to `logs/sim-<id>.log`
-- [ ] Each scenario's logs appear in its own Kibana index within 30s
-- [ ] `make setup-all` creates 5 dashboards + 10 alerts
-- [ ] Each dashboard shows 6 panels with meaningful data
-- [ ] `make reset-all` wipes all 5 scenario indexes + Kibana objects
-- [ ] Time compression: `--compress-time` shows 30min spread in Kibana timeline
-- [ ] All timestamps in IST (UTC+5:30)
+- [x] `docker-compose up` starts full stack
+- [x] `http://localhost:8080` shows UI
+- [x] Each scenario runs, streams logs, writes to `logs/sim-<id>.log`
+- [x] Each scenario's logs appear in its own Kibana index within 30s
+- [ ] `make setup-all` creates 5 dashboards + 10 alerts (only 01+02 fully set up)
+- [ ] Each dashboard shows 6 panels with meaningful data (only 01+02)
+- [ ] `make reset-all` wipes all 5 scenario indexes + Kibana objects (only 01+02)
+- [x] Time compression: `--compress-time` shows 30min spread in Kibana timeline
+- [x] All timestamps in IST (UTC+5:30)
 - [ ] QA agent reports PASS for all 5 scenarios
 
 ---
