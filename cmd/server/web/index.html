@@ -64,9 +64,19 @@ let activeES = null;
 function discoverUrl(s) {
   const dataViewId = `sim-${s.id}`;
   const indexPatternId = s.index_pattern_id || dataViewId;
-  const cols = "!('@timestamp',app_level,app_message,error_code,user_id,ip_address,service,scenario,attempt_count)";
-  const grid = "(columns:(app_level:(width:120),app_message:(width:155),ip_address:(width:108),scenario:(width:142),user_id:(width:90)))";
-  const a = encodeURIComponent(`(columns:${cols},dataSource:(dataViewId:${dataViewId},type:dataView),filters:!(),grid:${grid},hideChart:!f,index:'${indexPatternId}',interval:auto,query:(language:kuery,query:''),sort:!())`);
+  
+  let cols, grid, sort;
+  if (s.id === 'db-slow-query') {
+    cols = "!('@timestamp',app_level,app_message,query_type,table,error_code,duration_ms,scenario)";
+    grid = "(columns:(app_level:(width:120),app_message:(width:155),duration_ms:(width:133),error_code:(width:167),query_type:(width:147),scenario:(width:142)))";
+    sort = "!(!('@timestamp',asc))";
+  } else {
+    cols = "!('@timestamp',app_level,app_message,error_code,user_id,ip_address,service,scenario,attempt_count)";
+    grid = "(columns:(app_level:(width:120),app_message:(width:155),ip_address:(width:108),scenario:(width:142),user_id:(width:90)))";
+    sort = "!()";
+  }
+  
+  const a = encodeURIComponent(`(columns:${cols},dataSource:(dataViewId:${dataViewId},type:dataView),filters:!(),grid:${grid},hideChart:!f,index:'${indexPatternId}',interval:auto,query:(language:kuery,query:''),sort:${sort})`);
   const g = encodeURIComponent('(filters:!(),refreshInterval:(pause:!f,value:2000),time:(from:now-15m,to:now))');
   return `http://localhost:5601/app/discover#/?_a=${a}&_g=${g}`;
 }

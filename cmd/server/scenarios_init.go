@@ -36,6 +36,7 @@ func init() {
 		Index:           "sim-db-slow-query",
 		BinPath:         "scenarios/03-db-slow-query",
 		DiscoverColumns: []string{"level", "msg", "query_type", "duration_ms", "table", "error_code"},
+		DashboardID:     "03-dashboard",
 		IndexPatternID:  "03-index-pattern",
 	})
 	scenarios.Register(scenarios.Meta{
