@@ -178,14 +178,9 @@ REPEATED_FAILURES_SL_MSG="[Scenario 01] BRUTE FORCE DETECTED: {{context.value}} 
 ACCOUNT_LOCKED_ACTIONS=$(build_actions "account-locked" "${ACCOUNT_LOCKED_SL_MSG}" "${ACCOUNT_LOCKED_SLACK_BODY}")
 REPEATED_FAILURES_ACTIONS=$(build_actions "repeated-failures" "${REPEATED_FAILURES_SL_MSG}" "${REPEATED_FAILURES_SLACK_BODY}")
 
-# Notify policy: throttled if Slack is wired (prevent spam), active otherwise
-if [ -n "${SLACK_CONNECTOR_ID}" ]; then
-  NOTIFY_WHEN='"onThrottleInterval"'
-  THROTTLE_FIELD='"throttle": "10m",'
-else
-  NOTIFY_WHEN='"onActiveAlert"'
-  THROTTLE_FIELD='"throttle": null,'
-fi
+# Always fire on every active alert evaluation — no throttle
+NOTIFY_WHEN='"onActiveAlert"'
+THROTTLE_FIELD='"throttle": null,'
 
 # ── 6. Alert rule: Account Locked ─────────────────────────────────────────────
 echo "[${ID}] Creating alert rule: [Scenario 01] Auth Brute Force - Account Locked..."
@@ -195,7 +190,7 @@ curl -sf -X POST "${KB}/api/alerting/rule" \
   \"name\": \"[Scenario 01] Auth Brute Force - Account Locked\",
   \"rule_type_id\": \".es-query\",
   \"consumer\": \"alerts\",
-  \"schedule\": {\"interval\": \"1m\"},
+  \"schedule\": {\"interval\": \"10s\"},
   \"params\": {
     \"index\": [\"${INDEX}\"],
     \"timeField\": \"@timestamp\",
@@ -203,7 +198,7 @@ curl -sf -X POST "${KB}/api/alerting/rule" \
     \"size\": 10,
     \"threshold\": [0],
     \"thresholdComparator\": \">\",
-    \"timeWindowSize\": 5,
+    \"timeWindowSize\": 1,
     \"timeWindowUnit\": \"m\",
     \"excludeHitsFromPreviousRun\": false
   },
@@ -220,7 +215,7 @@ curl -sf -X POST "${KB}/api/alerting/rule" \
   \"name\": \"[Scenario 01] Auth Brute Force - Repeated Failures\",
   \"rule_type_id\": \".es-query\",
   \"consumer\": \"alerts\",
-  \"schedule\": {\"interval\": \"1m\"},
+  \"schedule\": {\"interval\": \"10s\"},
   \"params\": {
     \"index\": [\"${INDEX}\"],
     \"timeField\": \"@timestamp\",
@@ -228,7 +223,7 @@ curl -sf -X POST "${KB}/api/alerting/rule" \
     \"size\": 10,
     \"threshold\": [3],
     \"thresholdComparator\": \">=\",
-    \"timeWindowSize\": 5,
+    \"timeWindowSize\": 1,
     \"timeWindowUnit\": \"m\",
     \"excludeHitsFromPreviousRun\": false
   },
