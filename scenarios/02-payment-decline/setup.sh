@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
+
+# Load .env if present (provides SLACK_INCOMING_WEBHOOK_URL, etc.)
+ENV_FILE="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/.env"
+if [ -f "${ENV_FILE}" ]; then
+  set -a
+  source "${ENV_FILE}"
+  set +a
+fi
+
 KB="${KIBANA_URL:-http://localhost:5601}"
 ES="${ES_URL:-http://localhost:9200}"
 SCENARIO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

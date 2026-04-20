@@ -41,10 +41,21 @@ func runScenario(log *logger.Logger, compress bool) {
 		}
 	}
 
+	// Legitimate user - successful login
+	log.Info("Login successful",
+		"scenario", "auth-brute-force",
+		"service", "auth-service",
+		"user_id", "USR-2301",
+		"ip_address", "192.168.1.45",
+	)
+	sleep()
+
+	// Attacker - brute force on USR-1042
 	log.Warn("Login failed",
 		"scenario", "auth-brute-force",
+		"service", "auth-service",
 		"user_id", "USR-1042",
-		"ip_address", "10.0.1.55",
+		"ip_address", "203.0.113.87",
 		"attempt_count", 1,
 		"error_code", "INVALID_PASSWORD",
 	)
@@ -52,17 +63,29 @@ func runScenario(log *logger.Logger, compress bool) {
 
 	log.Warn("Login failed",
 		"scenario", "auth-brute-force",
+		"service", "auth-service",
 		"user_id", "USR-1042",
-		"ip_address", "10.0.1.55",
+		"ip_address", "203.0.113.87",
 		"attempt_count", 2,
 		"error_code", "INVALID_PASSWORD",
 	)
 	sleep()
 
+	// Legitimate user - successful login
+	log.Info("Login successful",
+		"scenario", "auth-brute-force",
+		"service", "auth-service",
+		"user_id", "USR-5678",
+		"ip_address", "10.0.2.112",
+	)
+	sleep()
+
+	// Attacker continues
 	log.Warn("Login failed",
 		"scenario", "auth-brute-force",
+		"service", "auth-service",
 		"user_id", "USR-1042",
-		"ip_address", "10.0.1.55",
+		"ip_address", "203.0.113.87",
 		"attempt_count", 3,
 		"error_code", "INVALID_PASSWORD",
 	)
@@ -70,17 +93,31 @@ func runScenario(log *logger.Logger, compress bool) {
 
 	log.Warn("Login failed",
 		"scenario", "auth-brute-force",
+		"service", "auth-service",
 		"user_id", "USR-1042",
-		"ip_address", "10.0.1.55",
+		"ip_address", "203.0.113.87",
 		"attempt_count", 4,
 		"error_code", "INVALID_PASSWORD",
 	)
 	sleep()
 
+	// Different attacker on different user
 	log.Warn("Login failed",
 		"scenario", "auth-brute-force",
+		"service", "auth-service",
+		"user_id", "USR-8901",
+		"ip_address", "198.51.100.42",
+		"attempt_count", 1,
+		"error_code", "INVALID_PASSWORD",
+	)
+	sleep()
+
+	// First attacker final attempt
+	log.Warn("Login failed",
+		"scenario", "auth-brute-force",
+		"service", "auth-service",
 		"user_id", "USR-1042",
-		"ip_address", "10.0.1.55",
+		"ip_address", "203.0.113.87",
 		"attempt_count", 5,
 		"error_code", "INVALID_PASSWORD",
 	)
@@ -88,9 +125,50 @@ func runScenario(log *logger.Logger, compress bool) {
 
 	log.Error("Account locked",
 		"scenario", "auth-brute-force",
+		"service", "auth-service",
 		"user_id", "USR-1042",
-		"ip_address", "10.0.1.55",
+		"ip_address", "203.0.113.87",
 		"attempt_count", 5,
 		"error_code", "ACCOUNT_LOCKED",
+	)
+	sleep()
+
+	// Second attacker continues
+	log.Warn("Login failed",
+		"scenario", "auth-brute-force",
+		"service", "auth-service",
+		"user_id", "USR-8901",
+		"ip_address", "198.51.100.42",
+		"attempt_count", 2,
+		"error_code", "INVALID_PASSWORD",
+	)
+	sleep()
+
+	log.Warn("Login failed",
+		"scenario", "auth-brute-force",
+		"service", "auth-service",
+		"user_id", "USR-8901",
+		"ip_address", "198.51.100.42",
+		"attempt_count", 3,
+		"error_code", "INVALID_PASSWORD",
+	)
+	sleep()
+
+	// Legitimate user - typo then success
+	log.Warn("Login failed",
+		"scenario", "auth-brute-force",
+		"service", "auth-service",
+		"user_id", "USR-3456",
+		"ip_address", "172.16.0.88",
+		"attempt_count", 1,
+		"error_code", "INVALID_PASSWORD",
+	)
+	sleep()
+
+	log.Info("Login successful",
+		"scenario", "auth-brute-force",
+		"service", "auth-service",
+		"user_id", "USR-3456",
+		"ip_address", "172.16.0.88",
 	)
 }

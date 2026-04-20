@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
+
+# Load .env if present (provides SLACK_INCOMING_WEBHOOK_URL, etc.)
+ENV_FILE="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/.env"
+if [ -f "${ENV_FILE}" ]; then
+  set -a
+  source "${ENV_FILE}"
+  set +a
+fi
+
 KB="${KIBANA_URL:-http://localhost:5601}"
 ES="${ES_URL:-http://localhost:9200}"
 SCENARIO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -71,19 +80,18 @@ fi
 echo "  server-log connector id: ${SERVER_LOG_CONNECTOR_ID}"
 
 # ── 4. Ensure Slack webhook connector exists ──────────────────────────────────
-# Requires Gold/Trial license. Reads SLACK_INCOMING_WEBHOOK_URL from env.
-# If not set, skips Slack and falls back to server-log only.
+# Use the .slack connector type which is simpler
 echo "[${ID}] Resolving Slack connector..."
 SLACK_CONNECTOR_ID=""
 
 if [ -n "${SLACK_INCOMING_WEBHOOK_URL:-}" ]; then
-  # Check if a connector named "Slack Alerts" already exists
+  # Check if a connector named "slack-webhook" already exists
   SLACK_CONNECTOR_ID=$(curl -sf "${KB}/api/actions/connectors" \
     -H "kbn-xsrf: true" \
     | python3 -c "
 import sys, json
 connectors = json.load(sys.stdin)
-sl = [c for c in connectors if c.get('name') == 'Slack Alerts' and c.get('connector_type_id') == '.webhook']
+sl = [c for c in connectors if c.get('name') == 'slack-webhook' and c.get('connector_type_id') == '.slack']
 if sl:
     print(sl[0]['id'])
 else:
@@ -91,18 +99,15 @@ else:
 ")
 
   if [ -z "${SLACK_CONNECTOR_ID}" ]; then
-    echo "[${ID}] Creating Slack webhook connector..."
+    echo "[${ID}] Creating Slack connector..."
     SLACK_CONNECTOR_ID=$(curl -sf -X POST "${KB}/api/actions/connector" \
       -H "kbn-xsrf: true" -H "Content-Type: application/json" \
       -d "{
-        \"name\": \"Slack Alerts\",
-        \"connector_type_id\": \".webhook\",
-        \"config\": {
-          \"method\": \"post\",
-          \"url\": \"${SLACK_INCOMING_WEBHOOK_URL}\",
-          \"headers\": {\"Content-Type\": \"application/json\"}
-        },
-        \"secrets\": {}
+        \"name\": \"slack-webhook\",
+        \"connector_type_id\": \".slack\",
+        \"secrets\": {
+          \"webhookUrl\": \"${SLACK_INCOMING_WEBHOOK_URL}\"
+        }
       }" | python3 -c "
 import sys, json
 r = json.load(sys.stdin)
@@ -128,7 +133,7 @@ fi
 build_actions() {
   local RULE_LABEL="$1"
   local SL_MSG="$2"
-  local SLACK_BODY="$3"
+  local SLACK_MSG="$3"
 
   if [ -n "${SLACK_CONNECTOR_ID}" ]; then
     python3 -c "
@@ -136,17 +141,17 @@ import json, sys
 sl_id = '${SERVER_LOG_CONNECTOR_ID}'
 sk_id = '${SLACK_CONNECTOR_ID}'
 sl_msg = '''${SL_MSG}'''
-slack_body = '''${SLACK_BODY}'''
+slack_msg = '''${SLACK_MSG}'''
 actions = [
   {
     'id': sl_id,
     'group': 'query matched',
-    'params': {'level': 'warning', 'message': sl_msg}
+    'params': {'level': 'warn', 'message': sl_msg}
   },
   {
     'id': sk_id,
     'group': 'query matched',
-    'params': {'body': slack_body}
+    'params': {'message': slack_msg}
   }
 ]
 print(json.dumps(actions))
@@ -160,7 +165,7 @@ actions = [
   {
     'id': sl_id,
     'group': 'query matched',
-    'params': {'level': 'warning', 'message': sl_msg}
+    'params': {'level': 'warn', 'message': sl_msg}
   }
 ]
 print(json.dumps(actions))
@@ -168,15 +173,15 @@ print(json.dumps(actions))
   fi
 }
 
-ACCOUNT_LOCKED_SLACK_BODY='{"blocks":[{"type":"header","text":{"type":"plain_text","text":"🚨 Incident | Auth Brute Force — Account Lockout","emoji":true}},{"type":"section","fields":[{"type":"mrkdwn","text":"*Severity:*\nHIGH"},{"type":"mrkdwn","text":"*Trigger:*\n{{context.value}} accounts locked in 5 min"},{"type":"mrkdwn","text":"*Pattern:*\nRepeated ACCOUNT_LOCKED errors from same IP"},{"type":"mrkdwn","text":"*Risk:*\nCredential stuffing / automated attack"}]},{"type":"section","text":{"type":"mrkdwn","text":"*Action:* Check Kibana for user ID + source IP → block IP if confirmed."}},{"type":"context","elements":[{"type":"mrkdwn","text":"Index: `sim-auth-brute-force` | Scenario: auth-brute-force | Window: 5m"}]}]}'
+ACCOUNT_LOCKED_SLACK_MSG='🚨 *Incident | Auth Brute Force — Account Lockout*\n\n*Severity:* HIGH\n*Trigger:* {{context.value}} accounts locked in 5 min\n*Service:* {{context.hits.0._source.service}}\n*IP Address:* {{context.hits.0._source.ip_address}}\n*User ID:* {{context.hits.0._source.user_id}}\n*Pattern:* Repeated ACCOUNT_LOCKED errors from same IP\n*Risk:* Credential stuffing / automated attack\n\n*Action:* Block IP {{context.hits.0._source.ip_address}} if confirmed malicious.\n\nIndex: \`sim-auth-brute-force\` | Scenario: auth-brute-force | Window: 5m'
 
-REPEATED_FAILURES_SLACK_BODY='{"blocks":[{"type":"header","text":{"type":"plain_text","text":"🚨 Incident | Auth Brute Force — Repeated Failures","emoji":true}},{"type":"section","fields":[{"type":"mrkdwn","text":"*Severity:*\nMEDIUM"},{"type":"mrkdwn","text":"*Trigger:*\n{{context.value}} failed attempts in 5 min"},{"type":"mrkdwn","text":"*Pattern:*\nRepeated INVALID_PASSWORD errors"},{"type":"mrkdwn","text":"*Risk:*\nActive brute force in progress — lockout imminent"}]},{"type":"section","text":{"type":"mrkdwn","text":"*Action:* Check Kibana for targeted user + source IP → monitor or pre-block."}},{"type":"context","elements":[{"type":"mrkdwn","text":"Index: `sim-auth-brute-force` | Scenario: auth-brute-force | Window: 5m"}]}]}'
+REPEATED_FAILURES_SLACK_MSG='🚨 *Incident | Auth Brute Force — Repeated Failures*\n\n*Severity:* MEDIUM\n*Trigger:* {{context.value}} failed attempts in 5 min\n*Service:* {{context.hits.0._source.service}}\n*IP Address:* {{context.hits.0._source.ip_address}}\n*User ID:* {{context.hits.0._source.user_id}}\n*Pattern:* Repeated INVALID_PASSWORD errors\n*Risk:* Active brute force in progress — lockout imminent\n\n*Action:* Monitor IP {{context.hits.0._source.ip_address}} or pre-block if attack continues.\n\nIndex: \`sim-auth-brute-force\` | Scenario: auth-brute-force | Window: 5m'
 
 ACCOUNT_LOCKED_SL_MSG="[Scenario 01] ACCOUNT LOCKED: {{context.hits}} accounts locked in the last 5 minutes. Value: {{context.value}}. Index: ${INDEX}."
 REPEATED_FAILURES_SL_MSG="[Scenario 01] BRUTE FORCE DETECTED: {{context.value}} invalid password attempts in the last 5 minutes. Index: ${INDEX}."
 
-ACCOUNT_LOCKED_ACTIONS=$(build_actions "account-locked" "${ACCOUNT_LOCKED_SL_MSG}" "${ACCOUNT_LOCKED_SLACK_BODY}")
-REPEATED_FAILURES_ACTIONS=$(build_actions "repeated-failures" "${REPEATED_FAILURES_SL_MSG}" "${REPEATED_FAILURES_SLACK_BODY}")
+ACCOUNT_LOCKED_ACTIONS=$(build_actions "account-locked" "${ACCOUNT_LOCKED_SL_MSG}" "${ACCOUNT_LOCKED_SLACK_MSG}")
+REPEATED_FAILURES_ACTIONS=$(build_actions "repeated-failures" "${REPEATED_FAILURES_SL_MSG}" "${REPEATED_FAILURES_SLACK_MSG}")
 
 # Always fire on every active alert evaluation — no throttle
 NOTIFY_WHEN='"onActiveAlert"'
